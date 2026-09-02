@@ -605,6 +605,9 @@ describe("index.js entry point", () => {
     const mockIo = { which: jest.fn().mockResolvedValue("/usr/bin/perl"), cp: jest.fn() };
     jest.doMock("@actions/io", () => mockIo);
 
+    const mockAxios = { post: jest.fn().mockResolvedValue({}), isAxiosError: jest.fn().mockReturnValue(false) };
+    jest.doMock("axios", () => mockAxios);
+
     // Require index.js — it immediately invokes run()
     // The IIFE in index.js will catch the error and call core.setFailed
     await jest.isolateModulesAsync(async () => {

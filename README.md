@@ -45,7 +45,7 @@ jobs:
       perl-versions: ${{ steps.action.outputs.perl-versions }}
     steps:
       - id: action
-        uses: perl-actions/perl-versions@v1
+        uses: perl-actions/perl-versions@v2
         with:
           since-perl: v5.10
           with-devel: true
@@ -63,7 +63,7 @@ jobs:
     container: perldocker/perl-tester:${{ matrix.perl-version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: uses install-with-cpanm
         uses: step-security/install-with-cpanm@v2
         with:
@@ -139,7 +139,7 @@ none
 ### Install cpanm and use it manually later
 
 ```yaml
-uses: step-security/install-with-cpanm@stable
+uses: step-security/install-with-cpanm@v2
 # you can then use it later
 run: sudo cpanm Module::To::Install
 ```
@@ -150,7 +150,7 @@ but you should prefer let the action install your modules
 
 ```yaml
 - name: install cpanm and one module
-  uses: step-security/install-with-cpanm@stable
+  uses: step-security/install-with-cpanm@v2
   with:
     install: "Simple::Accessor"
 ```
@@ -159,7 +159,7 @@ but you should prefer let the action install your modules
 
 ```yaml
 - name: install cpanm and one module
-  uses: step-security/install-with-cpanm@stable
+  uses: step-security/install-with-cpanm@v2
   with:
     install: |
       Simple::Accessor
@@ -170,7 +170,7 @@ but you should prefer let the action install your modules
 
 ```yaml
 - name: install cpanm and files from cpanfile
-  uses: step-security/install-with-cpanm@stable
+  uses: step-security/install-with-cpanm@v2
   with:
     cpanfile: "your-cpanfile"
 ```
@@ -181,7 +181,7 @@ Install modules with tests.
 
 ```yaml
 - name: install cpanm and files from cpanfile
-  uses: step-security/install-with-cpanm@stable
+  uses: step-security/install-with-cpanm@v2
   with:
     install: "Simple::Accessor"
     tests: true
@@ -205,9 +205,9 @@ windows:
     - name: perl -V
       run: perl -V
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: "install-with-cpanm"
-      uses: step-security/install-with-cpanm@stable
+      uses: step-security/install-with-cpanm@v2
       with:
         install: |
           abbreviation
@@ -225,7 +225,7 @@ windows:
     name: 'local-lib'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 'install-with-cpanm'
         uses: ./
         with:
