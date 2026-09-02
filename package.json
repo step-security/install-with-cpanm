@@ -1,0 +1,35 @@
+{
+  "name": "install-with-cpanm",
+  "version": "1.0",
+  "description": "Install Perl modules with cpanm",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint index.js lib.js",
+    "test": "jest",
+    "build": "ncc build index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perl-actions/install-with-cpanm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/perl-actions/install-with-cpanm/issues"
+  },
+  "homepage": "https://github.com/perl-actions/install-with-cpanm#readme",
+  "dependencies": {
+    "@actions/core": "^2.0.3",
+    "@actions/exec": "^2.0.0",
+    "@actions/github": "^8.0.1",
+    "@actions/io": "^2.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vercel/ncc": "^0.38.4",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
+    "jest": "^30.3.0"
+  }
+}
