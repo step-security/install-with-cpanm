@@ -5,6 +5,7 @@ jest.mock("@actions/io");
 const core = require("@actions/core");
 const exec = require("@actions/exec");
 const io = require("@actions/io");
+const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
@@ -200,7 +201,7 @@ describe("install_cpanm_location", () => {
 
     expect(exec.exec).toHaveBeenCalledWith(
       "/usr/bin/perl",
-      ["-MConfig", "-e", 'print "/usr/local/bin/cpanm"'],
+      ["-MConfig", "-e", '$p = $ARGV[0]; $p =~ s/\\$Config\\{(\\w+)\\}/$Config{$1}/g; print $p', "--", "/usr/local/bin/cpanm"],
       expect.objectContaining({ listeners: expect.any(Object) })
     );
     expect(result).toBe(path.resolve("/usr/local/bin/cpanm"));
@@ -216,8 +217,8 @@ describe("install_cpanm_location", () => {
 
     await install_cpanm_location();
 
-    const printExpr = exec.exec.mock.calls[0][1][2];
-    expect(printExpr).toContain("\\\\");
+    const args = exec.exec.mock.calls[0][1];
+    expect(args).toContain("C:\\cpanm\\cpanm");
   });
 
   test("accumulates stdout from multiple chunks", async () => {
@@ -238,6 +239,16 @@ describe("install_cpanm_location", () => {
 // ── install_cpanm ─────────────────────────────────────────────────────────────
 
 describe("install_cpanm", () => {
+  const FAKE_CPANM = 'our $VERSION = "1.7047";\n# cpanm script\n';
+  let readFileSyncSpy;
+  beforeEach(() => {
+    readFileSyncSpy = jest.spyOn(fs, "readFileSync").mockImplementation((_filePath, encoding) => {
+      if (encoding === "utf8") return FAKE_CPANM;
+      return Buffer.from(FAKE_CPANM);
+    });
+  });
+  afterEach(() => readFileSyncSpy.mockRestore());
+
   test("downloads cpanm via curl and uses io.cp on win32", async () => {
     jest.spyOn(os, "platform").mockReturnValue("win32");
     core.getInput.mockImplementation((name) => name === "sudo" ? "false" : "");
@@ -291,16 +302,23 @@ describe("install_cpanm", () => {
 // ── run ───────────────────────────────────────────────────────────────────────
 
 describe("run", () => {
+  const FAKE_CPANM = 'our $VERSION = "1.7047";\n# cpanm script\n';
+  let readFileSyncSpy;
   beforeEach(() => {
+    readFileSyncSpy = jest.spyOn(fs, "readFileSync").mockImplementation((_filePath, encoding) => {
+      if (encoding === "utf8") return FAKE_CPANM;
+      return Buffer.from(FAKE_CPANM);
+    });
     jest.spyOn(os, "platform").mockReturnValue("linux");
     io.which.mockResolvedValue("/usr/bin/perl");
-    exec.exec.mockImplementation(async (bin, args, options) => {
+    exec.exec.mockImplementation(async (_bin, _args, options) => {
       if (options && options.listeners) {
         options.listeners.stdout(Buffer.from("/usr/local/bin/cpanm"));
       }
       return 0;
     });
   });
+  afterEach(() => readFileSyncSpy.mockRestore());
 
   test("installs a single module", async () => {
     core.getInput.mockImplementation((name) => {

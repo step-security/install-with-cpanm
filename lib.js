@@ -1,6 +1,8 @@
 const core = require("@actions/core");
 const exec = require("@actions/exec");
 const io = require("@actions/io");
+const fs = require("fs");
+const crypto = require("crypto");
 
 const path = require("path");
 const os = require("os");
@@ -17,9 +19,8 @@ async function install_cpanm_location() {
     },
   };
 
-  let p = core.getInput("path");
-  p = p.replace(/\\/g, "\\\\");
-  await exec.exec(PERL, ["-MConfig", "-e", `print "${p}"`], options);
+  const p = core.getInput("path");
+  await exec.exec(PERL, ["-MConfig", "-e", '$p = $ARGV[0]; $p =~ s/\\$Config\\{(\\w+)\\}/$Config{$1}/g; print $p', "--", p], options);
 
   return path.resolve(out);
 }
@@ -31,6 +32,28 @@ async function install_cpanm(install_to) {
 
   const cpanmScript = path.join(os.tmpdir(), "cpanm");
   await exec.exec("curl", ["-sL", url, "-o", cpanmScript]);
+
+  try {
+    const content = fs.readFileSync(cpanmScript, "utf8");
+    const versionMatch = content.match(/\$VERSION\s*=\s*['"]([^'"]+)['"]/);
+    if (!versionMatch) {
+      core.warning("Could not determine cpanm version — skipping integrity verification");
+    } else {
+      const version = versionMatch[1];
+      core.info(`Verifying cpanm ${version} integrity against GitHub`);
+      const githubUrl = `https://raw.githubusercontent.com/miyagawa/cpanminus/${version}/cpanm`;
+      const cpanmScriptGH = path.join(os.tmpdir(), "cpanm-gh");
+      await exec.exec("curl", ["-sfL", githubUrl, "-o", cpanmScriptGH]);
+      const sha256 = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+      if (sha256(cpanmScript) !== sha256(cpanmScriptGH)) {
+        core.warning("cpanm integrity check failed: SHA256 mismatch between cpanmin.us and GitHub");
+      } else {
+        core.info("cpanm integrity verified");
+      }
+    }
+  } catch (e) {
+    core.warning(`cpanm integrity verification skipped: ${e.message}`);
+  }
 
   core.info(`cpanm Script: ${cpanmScript}`);
   core.info(`install_to ${install_to}`);
